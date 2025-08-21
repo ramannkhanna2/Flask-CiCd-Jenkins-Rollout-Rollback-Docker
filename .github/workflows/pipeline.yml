@@ -20,41 +20,10 @@ jobs:
         run: |
           docker build -t $APP_NAME:$VERSION .
 
-      - name: Deploy to Staging
+      - name: Deploy stage
         run: |
-          docker rm -f ${APP_NAME}-staging || true
-          docker run -d --name ${APP_NAME}-staging -p 5001:5000 $APP_NAME:$VERSION
+          docker rm -f ${APP_NAME} || true
+          docker run -d --name ${APP_NAME} -p 5001:5000 $APP_NAME:$VERSION
           docker ps
           echo "✅ Staging running at http://localhost:5001/"
 
-      - name: Manual Approval before Production
-        uses: trstringer/manual-approval@v1
-        with:
-          secret: ${{ github.TOKEN }}
-          approvers: raman
-          minimum-approvals: 1
-          issue-title: "Promote $APP_NAME:$VERSION to Production?"
-          issue-body: "Approve to promote container to production (:5002)."
-
-      - name: Deploy to Production
-        id: deploy
-        run: |
-          set -e
-          echo "🚀 Deploying to production..."
-          docker rm -f ${APP_NAME}-prod || true
-
-          if docker run -d --name ${APP_NAME}-prod -p 5002:5000 $APP_NAME:$VERSION; then
-            docker tag $APP_NAME:$VERSION $APP_NAME:latest
-            echo "✅ Production running at http://localhost:5002/"
-          else
-            echo "❌ Production deployment failed!"
-            exit 1
-          fi
-
-      - name: Rollback if failure
-        if: failure()
-        run: |
-          echo "⚠️ Rolling back to last stable version..."
-          docker rm -f ${APP_NAME}-prod || true
-          docker run -d --name ${APP_NAME}-prod -p 5002:5000 $APP_NAME:latest
-          echo "🔄 Rollback complete. Prod restored with :latest"
