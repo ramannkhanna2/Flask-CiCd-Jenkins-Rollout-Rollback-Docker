@@ -27,7 +27,7 @@ def home():
     with REQUEST_LATENCY.labels(endpoint="/").time():
         time.sleep(0.1)  # Simulate proc. delay (~100ms) to make it realistic
         REQUEST_COUNT.labels(endpoint="/", status="200").inc()   # 👈 updated
-        return "Hello from Raman App2!"
+        return "Hello from Raman App3!"
 
 # Dynamic endpoint /<name>
 @app.route("/<name>")
